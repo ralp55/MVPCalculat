@@ -10,16 +10,19 @@ import neo.project.task.calculator.DTO.CreditDto;
 import neo.project.task.calculator.DTO.LoanOfferDto;
 import neo.project.task.calculator.DTO.ScoringDataDto;
 import neo.project.task.calculator.Service.CreditCalculationService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import neo.project.task.calculator.Service.LoanApplicationRejectedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 
+
+
+@Slf4j
 @RestController
 @RequestMapping("/calculator")
 @Tag(name = "Credit Calculator API", description = "API для расчёта кредитных условий")
 public class CreditController {
-
     private final CreditCalculationService calculationService;
 
     public CreditController(CreditCalculationService calculationService) {
@@ -42,7 +45,10 @@ public class CreditController {
             }
     )
     @PostMapping("/calc")
-    public CreditDto calculate(@RequestBody ScoringDataDto request) {
-        return calculationService.calculateCredit(request);
+    public ResponseEntity<CreditDto> calculate(@RequestBody ScoringDataDto request) {
+        log.info("Received scoring request: {}", request);
+        CreditDto credit = calculationService.calculateCredit(request);
+        log.info("Successfully calculated credit: {}", credit);
+        return ResponseEntity.ok(credit);
     }
 }

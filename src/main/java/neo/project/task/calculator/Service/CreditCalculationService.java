@@ -12,16 +12,14 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
-public class CreditCalculationService {
+public class CreditCalculationService implements CreditCalculationServiceInterface {
 
-    private static final Logger logger = LoggerFactory.getLogger(CreditCalculationService.class);
-
+    @Override
     public CreditDto calculateCredit(ScoringDataDto scoring) {
-        logger.info("Starting credit calculation for client: {} {} {}",
-                scoring.getLastName(), scoring.getFirstName(), scoring.getMiddleName());
-        logger.debug("ScoringDataDto received: {}", scoring);
         validateRequest(scoring);
         BigDecimal amount = scoring.getAmount();
         int term = scoring.getTerm();
@@ -34,14 +32,16 @@ public class CreditCalculationService {
         if (salary) baseRate = baseRate.subtract(new BigDecimal("0.5"));
 
         BigDecimal scoringDelta = applyScoringAdjustments(scoring);
-        if (scoringDelta == null) return null;
+        if (scoringDelta == null) {
+            throw new LoanApplicationRejectedException("Отказано в одобрении");
+        }
 
         baseRate = baseRate.add(scoringDelta);
-        logger.debug("scoringDelta: {}, baseRate: {}", scoringDelta, baseRate);
+        log.debug("scoringDelta: {}, baseRate: {}", scoringDelta, baseRate);
         BigDecimal monthlyRate = baseRate.divide(BigDecimal.valueOf(12 * 100), 10, RoundingMode.HALF_UP);
-        logger.debug("monthlyRate: {}", monthlyRate);
+        log.debug("monthlyRate: {}", monthlyRate);
         BigDecimal monthlyPayment = calculateMonthlyPayment(amount, monthlyRate, term);
-        logger.debug("monthlyPayment: {}", monthlyPayment);
+        log.debug("monthlyPayment: {}", monthlyPayment);
         List<PaymentScheduleElementDto> schedule = buildSchedule(amount, term, monthlyRate, monthlyPayment);
 
         BigDecimal totalPayments = monthlyPayment.multiply(BigDecimal.valueOf(term));
@@ -53,7 +53,6 @@ public class CreditCalculationService {
         BigDecimal psk = totalPayments.divide(amount, 10, RoundingMode.HALF_UP)
                 .subtract(BigDecimal.ONE)
                 .multiply(BigDecimal.valueOf(100));
-        logger.info("Total payments: {}, PSK: {}", totalPayments, psk);
         CreditDto credit = new CreditDto();
         credit.setAmount(amount);
         credit.setTerm(term);
@@ -63,7 +62,6 @@ public class CreditCalculationService {
         credit.setIsInsuranceEnabled(insurance);
         credit.setIsSalaryClient(salary);
         credit.setPaymentSchedule(schedule);
-        logger.info("Credit info: {}", credit);
         return credit;
     }
     private BigDecimal applyScoringAdjustments(ScoringDataDto dto) {

@@ -3,9 +3,8 @@ package neo.project.task.calculator.Service;
 
 import neo.project.task.calculator.DTO.LoanOfferDto;
 import neo.project.task.calculator.DTO.LoanStatementRequestDto;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,17 +14,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
+
+@Slf4j
 @Service
-public class LoanCalculatorService {
+public class LoanCalculatorService implements LoanCalculatorServiceInterface{
 
-    private static final Logger logger = LoggerFactory.getLogger(LoanCalculatorService.class);
-
+    @Override
     public List<LoanOfferDto> processLoanRequest(LoanStatementRequestDto request) {
-        logger.info("Received loan request: {}", request);
 
         validateRequest(request);
 
-        logger.debug("Request validated successfully");
+        log.debug("Request validated successfully");
         List<LoanOfferDto> offers = new ArrayList<>();
         UUID statementId = UUID.randomUUID();
 
@@ -36,7 +35,7 @@ public class LoanCalculatorService {
                 BigDecimal monthlyPayment = calculateMonthlyPayment(request.getAmount(), rate, request.getTerm());
                 BigDecimal totalAmount = monthlyPayment.multiply(BigDecimal.valueOf(request.getTerm()));
 
-                logger.debug("Combination: insurance={}, salary={}, rate={}, monthlyPayment={}, totalAmount={}",
+                log.debug("Combination: insurance={}, salary={}, rate={}, monthlyPayment={}, totalAmount={}",
                         insurance, salary, rate, monthlyPayment, totalAmount);
 
                 LoanOfferDto offer = new LoanOfferDto();
@@ -54,13 +53,11 @@ public class LoanCalculatorService {
         }
         offers.sort(Comparator.comparing(LoanOfferDto::getRate));
 
-        logger.info("Generated {} loan offers for statementId={}", offers.size(), statementId);
-
         return offers;
     }
 
     private void validateRequest(LoanStatementRequestDto req) {
-        logger.debug("Validation start");
+        log.debug("Validation start");
         if (req.getAmount() == null || req.getAmount().compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Amount must be positive");
 
@@ -87,21 +84,21 @@ public class LoanCalculatorService {
 
         if (req.getPassportNumber() == null || !req.getPassportNumber().matches("\\d{6}"))
             throw new IllegalArgumentException("Passport number must be 6 digits");
-        logger.debug("Validation end");
+        log.debug("Validation end");
     }
 
     private BigDecimal calculateRate(boolean insurance, boolean salary) {
-        logger.debug("calculateRate start");
+        log.debug("calculateRate start");
         BigDecimal baseRate = new BigDecimal("10.0");
         if (insurance) baseRate = baseRate.subtract(new BigDecimal("1.0"));
         if (salary) baseRate = baseRate.subtract(new BigDecimal("0.5"));
-        logger.debug("calculateRate info: baseRate={}, salary={}, baseRate={}",
+        log.debug("calculateRate info: baseRate={}, salary={}, baseRate={}",
                 insurance, salary, baseRate);
         return baseRate;
     }
 
     private BigDecimal calculateMonthlyPayment(BigDecimal principal, BigDecimal rateAnnual, int termMonths) {
-        logger.debug("calculateMonthlyPayment start");
+        log.debug("calculateMonthlyPayment start");
         BigDecimal monthlyRate = rateAnnual.divide(BigDecimal.valueOf(12 * 100), 10, RoundingMode.HALF_UP);
         if (monthlyRate.compareTo(BigDecimal.ZERO) == 0) {
             return principal.divide(BigDecimal.valueOf(termMonths), 10, RoundingMode.HALF_UP);
@@ -110,7 +107,7 @@ public class LoanCalculatorService {
         BigDecimal numerator = principal.multiply(monthlyRate).multiply(onePlusRPowerN);
         BigDecimal denominator = onePlusRPowerN.subtract(BigDecimal.ONE);
         BigDecimal answer = numerator.divide(denominator, 10, RoundingMode.HALF_UP);
-        logger.debug("calculateMonthlyPayment info: MonthlyPayment={}", answer);
+        log.debug("calculateMonthlyPayment info: MonthlyPayment={}", answer);
         return answer;
     }
 }
