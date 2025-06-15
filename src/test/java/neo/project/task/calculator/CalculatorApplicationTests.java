@@ -10,4 +10,15 @@ class CalculatorApplicationTests {
 	void contextLoads() {
 	}
 
+	@Test
+	void testConstructor() {
+		new CalculatorApplication();
+	}
+
+	@Test
+	void testMainMethod() {
+		String[] args = {};
+		CalculatorApplication.main(args);
+	}
+
 }
