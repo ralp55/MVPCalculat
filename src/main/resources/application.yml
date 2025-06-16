@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: calculator
+server:
+  port: 8081
