@@ -5,28 +5,16 @@ import neo.project.task.calculator.DTO.LoanOfferDto;
 import neo.project.task.calculator.DTO.LoanStatementRequestDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 public class LoanCalculatorServiceTest {
 
     private LoanCalculatorService service;
-
-    @Mock
-    private LoanStatementRequestDto mockRequest;
 
     @BeforeEach
     public void setUp() {
@@ -58,32 +46,18 @@ public class LoanCalculatorServiceTest {
 
     @Test
     public void testInvalidAmount_throwsException() {
-        when(mockRequest.getAmount()).thenReturn(BigDecimal.ZERO);
-        when(mockRequest.getTerm()).thenReturn(12);
-        when(mockRequest.getFirstName()).thenReturn("Ivan");
-        when(mockRequest.getLastName()).thenReturn("Ivanov");
-        when(mockRequest.getMiddleName()).thenReturn("Ivanovich");
-        when(mockRequest.getEmail()).thenReturn("ivan@example.com");
-        when(mockRequest.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(mockRequest.getPassportSeries()).thenReturn("1234");
-        when(mockRequest.getPassportNumber()).thenReturn("123456");
+        LoanStatementRequestDto request = createValidRequest();
+        request.setAmount(BigDecimal.ZERO);
 
-        assertThrows(IllegalArgumentException.class, () -> service.processLoanRequest(mockRequest));
+        assertThrows(IllegalArgumentException.class, () -> service.processLoanRequest(request));
     }
 
     @Test
     public void testInvalidEmail_throwsException() {
-        when(mockRequest.getAmount()).thenReturn(new BigDecimal("10000"));
-        when(mockRequest.getTerm()).thenReturn(12);
-        when(mockRequest.getFirstName()).thenReturn("Ivan");
-        when(mockRequest.getLastName()).thenReturn("Ivanov");
-        when(mockRequest.getMiddleName()).thenReturn("Ivanovich");
-        when(mockRequest.getEmail()).thenReturn("invalid_email");
-        when(mockRequest.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(mockRequest.getPassportSeries()).thenReturn("1234");
-        when(mockRequest.getPassportNumber()).thenReturn("123456");
+        LoanStatementRequestDto request = createValidRequest();
+        request.setEmail("invalid_email");
 
-        assertThrows(IllegalArgumentException.class, () -> service.processLoanRequest(mockRequest));
+        assertThrows(IllegalArgumentException.class, () -> service.processLoanRequest(request));
     }
 
     @Test

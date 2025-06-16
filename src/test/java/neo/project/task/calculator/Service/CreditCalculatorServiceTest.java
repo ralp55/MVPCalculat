@@ -4,27 +4,39 @@ package neo.project.task.calculator.Service;
 import neo.project.task.calculator.DTO.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class CreditCalculatorServiceTest {
 
     private CreditCalculationService service;
 
-    @Mock
-    private ScoringDataDto scoringMock;
+    private ScoringDataDto createBaseScoringData() {
+        ScoringDataDto scoring = new ScoringDataDto();
+        scoring.setAmount(BigDecimal.valueOf(240000));
+        scoring.setTerm(24);
+        scoring.setFirstName("Ivan");
+        scoring.setLastName("Petrov");
+        scoring.setMiddleName("Ivanovich");
+        scoring.setBirthdate(LocalDate.of(1990, 1, 1));
+        scoring.setPassportSeries("1234");
+        scoring.setPassportNumber("123456");
+        scoring.setGender(Gender.MALE);
+        scoring.setMaritalStatus(MaritalStatus.MARRIED);
+        scoring.setDependentAmount(2);
 
-    @Mock
-    private EmploymentDto employmentMock;
+        EmploymentDto employment = new EmploymentDto();
+        employment.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+        employment.setSalary(BigDecimal.valueOf(30000));
+        employment.setWorkExperienceCurrent(6);
+        employment.setWorkExperienceTotal(36);
+
+        scoring.setEmployment(employment);
+        return scoring;
+    }
 
     @BeforeEach
     void setUp() {
@@ -33,295 +45,217 @@ class CreditCalculatorServiceTest {
 
     @Test
     void testAmountIsNull() {
-        when(scoringMock.getAmount()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setAmount(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
     @Test
-    void testAmountIsnotNull() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(1));
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+    void testAmountIsNotNull() {
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setAmount(BigDecimal.valueOf(-1));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
     @Test
     void testAmountIsNegative() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(-1));
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setAmount(BigDecimal.valueOf(-1));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
     @Test
     void testTermNullOrNonPositive() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
 
-        when(scoringMock.getTerm()).thenReturn(0);
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setTerm(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+
+        scoring.setTerm(0);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
 
     @Test
     void testInvalidFirstName() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getFirstName()).thenReturn("A");
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
 
-        when(scoringMock.getFirstName()).thenReturn("VeryLongNameOverThirtyCharacters123");
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setFirstName("A");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getFirstName()).thenReturn("Iv@n");
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setFirstName("VeryLongNameOverThirtyCharacters123");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+
+        scoring.setFirstName("Iv@n");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
     @Test
     void testInvalidBirthdate() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(null);
+        ScoringDataDto scoring = createBaseScoringData();
 
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setBirthdate(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.now().minusYears(17));
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setBirthdate(LocalDate.now().minusYears(17));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.now().minusYears(70));
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        scoring.setBirthdate(LocalDate.now().minusYears(70));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
     @Test
     void testInvalidPassportSeries() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("12A4");
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setPassportSeries("12A4");
 
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
+    @Test
+    void testInvalidEmploymentStatus1() {
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setEmployment(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+    }
     @Test
     void testInvalidEmploymentStatus() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getEmployment()).thenReturn(null);
-
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
-
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.UNEMPLOYED);
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
+        EmploymentDto emp = scoring.getEmployment();
+        emp.setEmploymentStatus(EmploymentStatus.UNEMPLOYED);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
     @Test
     void testSalaryTooLowOrUnemployedThrows() {
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setEmployment(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(500000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
+        EmploymentDto emp = new EmploymentDto();
+        emp.setEmploymentStatus(EmploymentStatus.UNEMPLOYED);
+        emp.setSalary(BigDecimal.valueOf(5000));
+        emp.setWorkExperienceCurrent(1);
+        emp.setWorkExperienceTotal(5);
+        scoring.setEmployment(emp);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getEmployment()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        emp.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+        emp.setSalary(BigDecimal.valueOf(-1));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.UNEMPLOYED);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(10000));
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(30000));
-        CreditDto result = service.calculateCredit(scoringMock);
-        assertNotNull(result);
+        emp.setSalary(BigDecimal.valueOf(30000));
+        assertDoesNotThrow(() -> service.calculateCredit(scoring));
     }
-
 
     @Test
     void testNullLastNameThrows() {
-        lenient().when(scoringMock.getLastName()).thenReturn(null);
-        lenient().when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setLastName(null);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-        assertFalse(ex.getMessage().contains("Last name"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+        assertTrue(ex.getMessage().contains("Last name"));
     }
 
     @Test
     void testShortLastNameThrows() {
-        lenient().when(scoringMock.getLastName()).thenReturn("A");
-        lenient().when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setLastName("A");
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-        assertFalse(ex.getMessage().contains("Last name"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+        assertTrue(ex.getMessage().contains("Last name"));
     }
 
     @Test
     void testNullMiddleNameThrows() {
-        lenient().when(scoringMock.getLastName()).thenReturn("Petrov");
-        lenient().when(scoringMock.getMiddleName()).thenReturn(null);
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setMiddleName(null);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-        assertFalse(ex.getMessage().contains("Middle name"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+        assertTrue(ex.getMessage().contains("Middle name"));
     }
 
     @Test
     void testShortMiddleNameThrows() {
-        lenient().when(scoringMock.getLastName()).thenReturn("Petrov");
-        lenient().when(scoringMock.getMiddleName()).thenReturn("I");
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.setMiddleName("I");
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-        assertFalse(ex.getMessage().contains("Middle name"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+        assertTrue(ex.getMessage().contains("Middle name"));
     }
-
 
     @Test
     void testSalaryTooLow() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(240000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(9000));
-
-        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoringMock));
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.getEmployment().setSalary(BigDecimal.valueOf(9000));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
     @Test
     void testValidInputReturnsCreditDto() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(240000));
-        when(scoringMock.getTerm()).thenReturn(24);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getGender()).thenReturn(Gender.MALE);
-        when(scoringMock.getMaritalStatus()).thenReturn(MaritalStatus.MARRIED);
-        when(scoringMock.getDependentAmount()).thenReturn(2);
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.getEmployment().setSalary(BigDecimal.valueOf(20000));
 
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(20000));
-        when(employmentMock.getWorkExperienceCurrent()).thenReturn(6);
-        when(employmentMock.getWorkExperienceTotal()).thenReturn(36);
-
-        var result = service.calculateCredit(scoringMock);
-
+        CreditDto result = service.calculateCredit(scoring);
         assertNotNull(result);
         assertTrue(result.getPsk().compareTo(BigDecimal.ZERO) > 0);
         assertTrue(result.getMonthlyPayment().compareTo(BigDecimal.ZERO) > 0);
         assertEquals(BigDecimal.valueOf(240000), result.getAmount());
     }
+
     @Test
     void testScoringAdjustmentsBusinessOwner() {
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(240000));
-        when(scoringMock.getTerm()).thenReturn(24);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getGender()).thenReturn(Gender.MALE);
-        when(scoringMock.getMaritalStatus()).thenReturn(MaritalStatus.NON_MARRIED);
-        when(scoringMock.getDependentAmount()).thenReturn(4);
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
+        ScoringDataDto scoring = createBaseScoringData();
+        EmploymentDto emp = scoring.getEmployment();
+        emp.setEmploymentStatus(EmploymentStatus.BUSINESS_OWNER);
+        emp.setWorkExperienceCurrent(1);
+        emp.setWorkExperienceTotal(12);
+        emp.setSalary(BigDecimal.valueOf(20000));
 
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.BUSINESS_OWNER);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(20000));
-        when(employmentMock.getWorkExperienceCurrent()).thenReturn(1);
-        when(employmentMock.getWorkExperienceTotal()).thenReturn(12);
-
-        var result = service.calculateCredit(scoringMock);
-
+        CreditDto result = service.calculateCredit(scoring);
         assertNotNull(result);
         assertTrue(result.getRate().compareTo(BigDecimal.ZERO) > 0);
     }
+
     @Test
     void testAgeBoundaryValid() {
-        LocalDate twentyYearsAgo = LocalDate.now().minusYears(20);
-        LocalDate sixtyFiveYearsAgo = LocalDate.now().minusYears(65);
+        ScoringDataDto scoring = createBaseScoringData();
+        EmploymentDto emp = scoring.getEmployment();
+        emp.setSalary(BigDecimal.valueOf(20000));
 
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(240000));
-        when(scoringMock.getTerm()).thenReturn(24);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Petrov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getGender()).thenReturn(Gender.MALE);
-        when(scoringMock.getMaritalStatus()).thenReturn(MaritalStatus.MARRIED);
-        when(scoringMock.getDependentAmount()).thenReturn(1);
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(20000));
-        when(employmentMock.getWorkExperienceCurrent()).thenReturn(5);
-        when(employmentMock.getWorkExperienceTotal()).thenReturn(30);
+        scoring.setBirthdate(LocalDate.now().minusYears(20));
+        assertDoesNotThrow(() -> service.calculateCredit(scoring));
 
-
-        when(scoringMock.getBirthdate()).thenReturn(twentyYearsAgo);
-        assertDoesNotThrow(() -> service.calculateCredit(scoringMock));
-
-
-        when(scoringMock.getBirthdate()).thenReturn(sixtyFiveYearsAgo);
-        assertDoesNotThrow(() -> service.calculateCredit(scoringMock));
+        scoring.setBirthdate(LocalDate.now().minusYears(65));
+        assertDoesNotThrow(() -> service.calculateCredit(scoring));
     }
+
     @Test
     void testSuccessfulCreditCalculation() {
+        ScoringDataDto scoring = createBaseScoringData();
 
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(500_000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getIsInsuranceEnabled()).thenReturn(true);
-        when(scoringMock.getIsSalaryClient()).thenReturn(true);
-        when(scoringMock.getFirstName()).thenReturn("Ivan");
-        when(scoringMock.getLastName()).thenReturn("Ivanov");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovich");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1990, 1, 1));
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        when(scoringMock.getGender()).thenReturn(Gender.MALE);
-        when(scoringMock.getMaritalStatus()).thenReturn(MaritalStatus.MARRIED);
-        when(scoringMock.getDependentAmount()).thenReturn(0);
+        scoring.setAmount(BigDecimal.valueOf(500_000));
+        scoring.setTerm(12);
+        scoring.setIsInsuranceEnabled(true);
+        scoring.setIsSalaryClient(true);
+        scoring.setFirstName("Ivan");
+        scoring.setLastName("Ivanov");
+        scoring.setMiddleName("Ivanovich");
+        scoring.setBirthdate(LocalDate.of(1990, 1, 1));
+        scoring.setPassportSeries("1234");
+        scoring.setPassportNumber("123456");
+        scoring.setGender(Gender.MALE);
+        scoring.setMaritalStatus(MaritalStatus.MARRIED);
+        scoring.setDependentAmount(0);
 
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(150_000));
-        when(employmentMock.getWorkExperienceCurrent()).thenReturn(24);
-        when(employmentMock.getWorkExperienceTotal()).thenReturn(60);
+        EmploymentDto employment = new EmploymentDto();
+        employment.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+        employment.setSalary(BigDecimal.valueOf(150_000));
+        employment.setWorkExperienceCurrent(24);
+        employment.setWorkExperienceTotal(60);
+        scoring.setEmployment(employment);
 
-        CreditDto result = service.calculateCredit(scoringMock);
+        CreditDto result = service.calculateCredit(scoring);
 
         assertNotNull(result);
         assertEquals(BigDecimal.valueOf(500_000), result.getAmount());
@@ -329,177 +263,149 @@ class CreditCalculatorServiceTest {
         assertTrue(result.getIsInsuranceEnabled());
         assertTrue(result.getIsSalaryClient());
 
-
         assertEquals(new BigDecimal("2.50"), result.getRate());
 
         assertNotNull(result.getMonthlyPayment());
         assertNotNull(result.getPsk());
-
         assertEquals(12, result.getPaymentSchedule().size());
     }
 
 
 
+
     @Test
     void testFemaleDivorcedGivesRateBonus() {
-        when(scoringMock.getGender()).thenReturn(Gender.FEMALE);
-        when(scoringMock.getMaritalStatus()).thenReturn(MaritalStatus.NON_MARRIED);
-        when(scoringMock.getFirstName()).thenReturn("Ivana");
-        when(scoringMock.getLastName()).thenReturn("Petrova");
-        when(scoringMock.getMiddleName()).thenReturn("Ivanovna");
-        when(scoringMock.getBirthdate()).thenReturn(LocalDate.of(1995, 1, 1));
-        when(scoringMock.getAmount()).thenReturn(BigDecimal.valueOf(100000));
-        when(scoringMock.getTerm()).thenReturn(12);
-        when(scoringMock.getEmployment()).thenReturn(employmentMock);
-        when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(20000));
-        when(employmentMock.getWorkExperienceCurrent()).thenReturn(5);
-        when(employmentMock.getWorkExperienceTotal()).thenReturn(36);
-        when(scoringMock.getPassportSeries()).thenReturn("1234");
-        when(scoringMock.getPassportNumber()).thenReturn("123456");
-        var result = service.calculateCredit(scoringMock);
+        ScoringDataDto scoring = createBaseScoringData();
+
+        scoring.setGender(Gender.FEMALE);
+        scoring.setMaritalStatus(MaritalStatus.NON_MARRIED);
+        scoring.setFirstName("Ivana");
+        scoring.setLastName("Petrova");
+        scoring.setMiddleName("Ivanovna");
+        scoring.setBirthdate(LocalDate.of(1995, 1, 1));
+        scoring.setAmount(BigDecimal.valueOf(100_000));
+        scoring.setTerm(12);
+        scoring.setPassportSeries("1234");
+        scoring.setPassportNumber("123456");
+
+        EmploymentDto employment = new EmploymentDto();
+        employment.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+        employment.setSalary(BigDecimal.valueOf(20_000));
+        employment.setWorkExperienceCurrent(5);
+        employment.setWorkExperienceTotal(36);
+        scoring.setEmployment(employment);
+
+        CreditDto result = service.calculateCredit(scoring);
 
         assertNotNull(result);
         assertTrue(result.getRate().compareTo(BigDecimal.ZERO) > 0);
     }
+
     @Test
     void testNullSalaryThrows() {
-        lenient().when(employmentMock.getSalary()).thenReturn(null);
+        ScoringDataDto scoring = createBaseScoringData();
+        scoring.getEmployment().setSalary(null);
 
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
 
     @Test
     void testInvalidPassportNumberThrows() {
-        lenient().when(scoringMock.getPassportNumber()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        ScoringDataDto scoring = createBaseScoringData();
 
-        lenient().when(scoringMock.getPassportNumber()).thenReturn("12345");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setPassportNumber(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
+        scoring.setPassportNumber("12345");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getPassportNumber()).thenReturn("1234567");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setPassportNumber("1234567");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getPassportNumber()).thenReturn("abc123");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setPassportNumber("abc123");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
     @Test
     void testInvalidLastNameThrows() {
-        lenient().when(scoringMock.getLastName()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        ScoringDataDto scoring = createBaseScoringData();
 
-        lenient().when(scoringMock.getLastName()).thenReturn("A");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setLastName(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getLastName()).thenReturn("ThisNameIsWayTooLongForTheValidationCheck");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setLastName("A");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getLastName()).thenReturn("Petro#v");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setLastName("ThisNameIsWayTooLongForTheValidationCheck");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+
+        scoring.setLastName("Petro#v");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
 
     @Test
     void testInvalidMiddleNameThrows() {
-        lenient().when(scoringMock.getMiddleName()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        ScoringDataDto scoring = createBaseScoringData();
 
-        lenient().when(scoringMock.getMiddleName()).thenReturn("I");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setMiddleName(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getMiddleName()).thenReturn("ThisMiddleNameIsWayTooLongToBeValid");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setMiddleName("I");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
 
-        lenient().when(scoringMock.getMiddleName()).thenReturn("Ivan#vich");
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setMiddleName("ThisMiddleNameIsWayTooLongToBeValid");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+
+        scoring.setMiddleName("Ivan#vich");
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
 
 
     @Test
-    void testAgeLessThan20ReturnsNull() {
-        lenient().when(scoringMock.getBirthdate()).thenReturn(LocalDate.now().minusYears(1));
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-    }
+    void testAgeLessThan20Throws() {
+        ScoringDataDto scoring = createBaseScoringData();
 
-    @Test
-    void testAgeMoreThan65ReturnsNull() {
-        lenient().when(scoringMock.getBirthdate()).thenReturn(LocalDate.now().plusYears(66));
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+        scoring.setBirthdate(LocalDate.now().minusYears(19));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
-
-    @Test
-    void testEmploymentNullReturnsNull() {
-        lenient().when(scoringMock.getEmployment()).thenReturn(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-    }
-
-    @Test
-    void testEmploymentStatusUnemployedReturnsNull() {
-        lenient().when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.UNEMPLOYED);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
-    }
-
 
 
     @Test
-    void testSalaryTooLowReturnsNull() {
-        lenient().when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.EMPLOYED);
-        lenient().when(employmentMock.getSalary()).thenReturn(BigDecimal.valueOf(10000));
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+    void testAgeMoreThan65Throws() {
+        ScoringDataDto scoring = createBaseScoringData();
+
+        scoring.setBirthdate(LocalDate.now().minusYears(66));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
 
     @Test
-    void testEmploymentStatusBusinessOwnerAddsDelta() {
-        lenient().when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.BUSINESS_OWNER);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+    void testEmploymentNullThrows() {
+        ScoringDataDto scoring = createBaseScoringData();
+
+        scoring.setEmployment(null);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
+
 
     @Test
-    void testEmploymentStatusSelfEmployedAddsDelta() {
-        lenient().when(employmentMock.getEmploymentStatus()).thenReturn(EmploymentStatus.SELF_EMPLOYED);
-        assertThrows(IllegalArgumentException.class, () -> {
-            service.calculateCredit(scoringMock);
-        });
+    void testEmploymentStatusUnemployedThrows() {
+        ScoringDataDto scoring = createBaseScoringData();
+
+        scoring.getEmployment().setEmploymentStatus(EmploymentStatus.UNEMPLOYED);
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
     }
 
+
+
+    @Test
+    void testSalaryTooLowThrows() {
+        ScoringDataDto scoring = createBaseScoringData();
+
+        scoring.getEmployment().setSalary(BigDecimal.valueOf(0));
+        assertThrows(IllegalArgumentException.class, () -> service.calculateCredit(scoring));
+    }
 }

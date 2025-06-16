@@ -10,8 +10,7 @@ import neo.project.task.calculator.DTO.CreditDto;
 import neo.project.task.calculator.DTO.LoanOfferDto;
 import neo.project.task.calculator.DTO.ScoringDataDto;
 import neo.project.task.calculator.Service.CreditCalculationService;
-import neo.project.task.calculator.Service.LoanApplicationRejectedException;
-import org.springframework.http.HttpStatus;
+import neo.project.task.calculator.Service.CreditCalculationServiceInterface;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/calculator")
 @Tag(name = "Credit Calculator API", description = "API для расчёта кредитных условий")
 public class CreditController {
-    private final CreditCalculationService calculationService;
+    private final CreditCalculationServiceInterface calculationService;
 
     public CreditController(CreditCalculationService calculationService) {
         this.calculationService = calculationService;

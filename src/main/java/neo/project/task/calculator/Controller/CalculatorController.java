@@ -9,9 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import neo.project.task.calculator.DTO.LoanOfferDto;
 import neo.project.task.calculator.DTO.LoanStatementRequestDto;
-import neo.project.task.calculator.Service.LoanCalculatorService;
+import neo.project.task.calculator.Service.LoanCalculatorServiceInterface;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Tag(name = "Loan Calculator API", description = "API для расчёта возможности кредитации")
 public class CalculatorController {
     @Autowired
-    private LoanCalculatorService calculatorService;
+    private LoanCalculatorServiceInterface calculatorService;
     @Operation(
             summary = "Получение кредитных предложений",
             description = "Вычисляет список возможных кредитных предложений по параметрам клиента.",
